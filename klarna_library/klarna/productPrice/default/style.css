@@ -1,0 +1,150 @@
+.klarna_PPBox {
+    width: 176px;
+    margin: 10px 10px 0 0;
+    position: relative;
+    text-align: right;
+    font-size: 11px !important;
+    font-family: arial, helvetica, sans-serif !important;
+    height: 0; /* Do not touch other boxes */
+    z-index: 10000 !important;
+    margin-bottom: 30px;
+}
+
+.klarna_PPBox_bottomMid table,
+.klarna_PPBox_bottomMid table td,
+.klarna_PPBox_bottomMid table th,
+.klarna_PPBox_bottomMid table tr {
+    font-weight: normal !important;
+    border: none !important;
+    border: 0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    line-height: 18px !important;
+}
+
+.klarna_PPBox_inner {
+    min-width: 155px;
+    display: inline-block;
+}
+
+.klarna_PPBox_top {
+    height: 35px;
+    min-width: 155px;
+    z-index: 10;
+    position: relative;
+    cursor: pointer;
+    text-align: center;
+}
+
+.klarna_PPBox_bottom {
+    min-width: 155px;
+    height: 155px;
+    z-index: 9;
+    color: #FFFFFF;
+    background-image: url("backBottom_mid.png");
+    background-repeat: repeat-x;
+    margin-top: -5px;
+    background-position: bottom;
+    display: none;
+}
+
+.klarna_PPBox_topLeft {
+    min-width: 32px;
+    height: 35px;
+    float: left;
+    background-image: url("backTop_left.png");
+    background-repeat: no-repeat;
+}
+
+.klarna_PPBox_topRight {
+    min-width: 6px;
+    height: 35px;
+    float: right;
+    background-image: url("backTop_right.png");
+    background-repeat: no-repeat;
+}
+
+.klarna_PPBox_topMid {
+    min-width: 138px;
+    height: 35px;
+    float: right;
+    background-image: url("backTop_mid.png");
+    background-repeat: repeat-x;
+    cursor: pointer;
+}
+
+.klarna_PPBox_topMid p {
+    padding: 10px 3px 0 5px !important;
+    display: block !important;
+}
+
+.default_product_display .klarna_PPBox_topMid p {
+    padding-top: 10px;
+}
+
+.klarna_PPBox_topMid p label {
+    color: #009EDA;
+    padding: 0 2px 0 2px;
+    cursor: pointer;
+}
+
+.klarna_PPBox_bottomLeft {
+    min-width: 5px;
+    float: left;
+    height: 155px;
+    background-position: bottom;
+    background-image: url("backBottom_left.png");
+    background-repeat: no-repeat;
+    position: relative;
+    margin-top: -5px;
+}
+
+.klarna_PPBox_bottomRight {
+    min-width: 5px;
+    float: right;
+    height: 155px;
+    background-position: bottom;
+    background-image: url("backBottom_right.png");
+    background-repeat: no-repeat;
+    position: relative;
+    margin-top: -5px;
+}
+
+.klarna_PPBox_bottomMid {
+    margin-left: 3px;
+    padding-top:3px;
+    min-width: 163px;
+    float: right;
+    overflow: hidden;
+}
+
+.klarna_PPBox_bottomMid table th {
+    border-bottom: 1px solid #FFFFFF;
+}
+
+.klarna_PPBox_pricetag {
+    color: #009EDA;
+    text-align: right;
+}
+
+.klarna_PPBox_bottomMid_readMore {
+    text-align: center;
+}
+
+.klarna_PPBox_bottomMid_readMore a {
+    color: #FFFFFF;
+    text-decoration: underline;
+}
+
+.klarna_PPBox_bottomMid_readMore a:hover {
+    color: #FFFFFF;
+    text-decoration: none;
+}
+
+.klarna_PPBox_pull {
+    min-width: 100%;
+    margin-top: 4px;
+    text-align: center;
+    cursor: pointer;
+    height: 20px;
+}

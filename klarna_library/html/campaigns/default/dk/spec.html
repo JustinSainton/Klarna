@@ -1,0 +1,148 @@
+
+<!-- KLARNA BOX -->
+<script type="text/javascript">
+         <!--
+             var global_countryCode = '{{setup.countryCode}}';
+             var global_ajax_file = '{{setup.path_ajax}}klarnaAjax.php';
+             var global_language_spec = '{{setup.langISO}}';
+             var shipmentAddressInput_spec = '{{input.shipmentAddressInput}}';
+             var global_sum = '{{setup.sum}}';
+             var global_flag = '{{setup.flag}}';
+             var global_klarna_img_url = '{{setup.path_img}}';
+             var lang_companyNotAllowed = '{{lang.company_not_allowed}}';
+             var global_spec_eid = '{{setup.eid}}';
+             document.write('<scr'+'ipt src="http://static.klarna.com/external/js/klarnaspecial.js" type="text/javascript"></scr'+'ipt>');
+
+             var lang_personNum    = '{{lang.person_number}}';
+             var lang_orgNum        = '{{lang.organisation_number}}';
+
+             var spec_ITId        = '{{input.invoice_type}}';
+
+             if(typeof klarnaGeneralLoaded == 'undefined') {
+                 document.write('<scr'+'ipt src="{{setup.path_js}}klarnaGeneral.js" type="text/javascript"></scr'+'ipt>');
+             }
+
+             if(typeof klarnaAgreementLoaded == 'undefined') {
+                 document.write('<scr'+'ipt src="http://static.klarna.com/external/js/klarnaConsentNew.js" type="text/javascript"></scr'+'ipt>');
+                 klarnaAgreementLoaded = true;
+             }
+
+             var paramValues_spec = new Array('{{input.socialNumber}}','{{input.invoice_type}}','{{input.street}}', '{{input.homenumber}}', '{{input.city}}','{{input.zipcode}}','{{input.reference}}','{{input.phoneNumber}}','{{input.emailAddress}}','{{input.invoiceType}}','{{input.shipmentAddressInput}}','{{input.year_salary}}', '{{input.firstName}}', '{{input.lastName}}');
+             var paramNames_spec  = new Array('socialNumber','invoice_type','street', 'homenumber', 'city', 'zipcode', 'reference','phoneNumber','emailAddress','invoiceType','shipmentAddressInput','year_salary','firstName','lastName');
+
+             jQuery('head').append('<link type="text/css" rel="stylesheet" href="{{setup.path_css}}klarna.css" />');
+         //-->
+         </script>
+<script src="{{setup.path_js}}klarna_spec.js" type="text/javascript"></script>
+<div class="klarna_box_container">
+	<div class="klarna_box" id="klarna_box_spec">
+		<div class="klarna_box_top">
+			<div id="klarna_box_spec_top_right">
+				<div class="klarna_box_top_flag">
+					<div class="box_active_language">
+						<img src="{{setup.path_img}}images/flags/{{setup.langISO}}.png"
+							alt="{{setup.langISO}}" /> <img
+							src="{{setup.path_img}}images/arrow_down.gif" alt=""
+							style="float: right; padding: 6px 2px 0 0; margin: 0" />
+					</div>
+					<div class="klarna_box_top_flag_list">
+						<img src="{{setup.path_img}}images/flags/en.png" alt="en" /> <img
+							src="{{setup.path_img}}images/flags/da.png" alt="da" /> <img
+							src="{{setup.path_img}}images/flags/de.png" alt="de" /> <img
+							src="{{setup.path_img}}images/flags/fi.png" alt="fi" /> <img
+							src="{{setup.path_img}}images/flags/nl.png" alt="nl" /> <img
+							src="{{setup.path_img}}images/flags/nb.png" alt="nb" /> <img
+							src="{{setup.path_img}}images/flags/sv.png" alt="sv" />
+					</div>
+				</div>
+				<div class="klarna_box_top_agreement">
+				    <a id="specialCampaignPopupLink" href="javascript:ShowKlarnaSpecialPaymentPopup()"></a>
+				</div>
+				<div class="klarna_box_bottom_languageInfo">
+					<img src="{{setup.path_img}}images/notice.png"
+						alt="{{lang.languageSetting_note_dk}}" />
+				</div>
+			</div>
+			<img
+				src="{{setup.path_img}}images/logo/{{setup.countryCode}}/klarna_account.png"
+				alt="{{lang.img_logo_account}}" class="klarna_logo" id="klarna_logo" />
+		</div>
+		<div class="klarna_box_bottom">
+			<div class="klarna_box_bottom_contents">
+				<div class="klarna_box_bottom_left">
+					<div class="klarna_box_bottom_content">
+						<div class="klarna_box_bottom_title">{{lang.spec_payment}}</div>
+						<ol id="{{input.paymentPlan}}">{{setup.pclasses}}
+						</ol>
+						<input type="hidden" name="{{input.paymentPlan}}"
+							value="{{value.paymentPlan}}" />
+						<div class="klarna_box_bottom_content_listPriceInfo">
+							{{lang.prices_are_in_sek}}</div>
+					</div>
+				</div>
+				<div class="klarna_box_bottom_right">
+					<div class="klarna_box_bottom_content">
+						<div class="klarna_box_bottom_title" id="perOrg_title">{{lang.person_number}}</div>
+						<input alt="{{lang.notice_socialNumber_spec_da}}" type="text"
+							name="{{input.socialNumber}}" value="{{value.socialNumber}}"
+							class="Klarna_fullwidth" />
+						<div class="klarna_box_bottom_input_combo" style="width: 100%"
+							id="box_private">
+							<div id="left" style="width: 60%">
+								<div class="klarna_box_bottom_title">{{lang.first_name}}</div>
+								<input alt="{{lang.notice_firstName}}" type="text"
+									name="{{input.firstName}}" value="{{value.firstName}}"
+									style="width: 98%" />
+							</div>
+							<div id="right" style="width: 40%">
+								<div class="klarna_box_bottom_title">{{lang.last_name}}</div>
+								<input alt="{{lang.notice_lastName}}" type="text"
+									name="{{input.lastName}}" value="{{value.lastName}}"
+									style="width: 100%" />
+							</div>
+						</div>
+						<div class="klarna_box_bottom_input_combo" style="width: 100%">
+							<div id="left" style="width: 40%">
+								<div class="klarna_box_bottom_title">{{lang.phone_number}}</div>
+								<input alt="{{lang.notice_phoneNumber_da}}" type="text"
+									name="{{input.phoneNumber}}" value="{{value.phoneNumber}}"
+									style="width: 98%" />
+							</div>
+							<div id="right" style="width: 60%">
+								<div class="klarna_box_bottom_title">{{lang.address_street}}</div>
+								<input alt="{{lang.notice_streetaddress}}" type="text"
+									name="{{input.street}}" value="{{value.street}}"
+									style="width: 100%" />
+							</div>
+						</div>
+						<div class="klarna_box_bottom_input_combo" style="width: 100%">
+							<div id="left" style="width: 40%">
+								<div class="klarna_box_bottom_title">{{lang.address_zip}}</div>
+								<input alt="{{lang.notice_zip}}" type="text"
+									name="{{input.zipcode}}" value="{{value.zipcode}}"
+									style="width: 98%" />
+							</div>
+							<div id="right" style="width: 60%">
+								<div class="klarna_box_bottom_title">{{lang.address_city}}</div>
+								<input alt="{{lang.notice_city}}" type="text"
+									name="{{input.city}}" value="{{value.city}}"
+									style="width: 100%" />
+							</div>
+						</div>
+						<div class="klarna_box_bottom_title">{{lang.year_salary}}</div>
+						<input alt="{{lang.notice_year_salary_da}}" type="text"
+							name="{{input.year_salary}}" value="{{value.year_salary}}"
+							class="Klarna_fullwidth" />
+					</div>
+				</div>
+			</div>
+		</div>
+        <div class="klarna_box_ilt">
+            <div class="klarna_box_ilt_title">{{lang.ilt_title}}</div>
+            <div class="klarna_box_iltContents">{{ilt.box}}</div>
+        </div>
+	</div>
+</div>
+<input type="hidden" name="{{input.emailAddress}}"
+	value="{{value.emailAddress}}" />
+<!-- END KLARNA BOX -->

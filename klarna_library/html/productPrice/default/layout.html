@@ -1,0 +1,39 @@
+<link rel="stylesheet" type="text/css" href="{{setup.path_css}}style.css" />
+<script type="text/javascript" src="{{setup.path_js}}klarna_pp.js"></script>
+<script type="text/javascript" src="https://static.klarna.com/external/js/klarnapart.js"></script>
+<script>
+    addKlarnaPartPaymentEvent(function() { InitKlarnaPartPaymentElements('klarna_partpayment', '{{input.eid}}', '{{input.country}}'); });
+</script>
+<div class="klarna_PPBox" style="display: none">
+    <div id="klarna_partpayment" style="display: none"></div>
+    <div class="klarna_PPBox_inner">
+         <div class="klarna_PPBox_top">
+              <div class="klarna_PPBox_topRight"></div>
+              <div class="klarna_PPBox_topMid">
+                  <p>{{lang.PPBOX_fromText}}<label>{{input.defaultMonth}}</label>{{lang.PPBOX_monthText}}{{setup.asterisk}}</p>
+              </div>
+              <div class="klarna_PPBox_topLeft"></div>
+         </div>
+         <div class="klarna_PPBox_bottom">
+              <div class="klarna_PPBox_bottomRight"></div>
+              <div class="klarna_PPBox_bottomMid">
+                  <table cellpadding="0" cellspacing="0" width="100%" border="0">
+                      <thead>
+                          <tr>
+                              <th style="text-align: left">{{lang.PPBOX_th_month}}</th>
+                              <th style="text-align: right">{{lang.PPBOX_th_sum}}</th>
+                          </tr>
+                      </thead>
+                      <tbody>
+                          {{input.monthTable}}
+                      </tbody>
+                  </table>
+                  <div class="klarna_PPBox_bottomMid_readMore">
+                      <a href="javascript:ShowKlarnaPartPaymentPopup();">{{lang.PPBox_readMore}}</a>
+                  </div>
+              </div>
+              <div class="klarna_PPBox_bottomLeft"></div>
+         </div>
+    </div>
+    {{input.nlBanner}}
+</div>
