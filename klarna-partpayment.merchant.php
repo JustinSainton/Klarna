@@ -1,7 +1,7 @@
 <?php
 
-require_once(WPSC_FILE_PATH . '/wpsc-merchants/klarna_library/WPKlarna.php');
-require_once(WPSC_FILE_PATH . '/wpsc-merchants/klarna_library/WPKlarnaHTML.php');
+require_once( 'klarna_library/WPKlarna.php');
+require_once( 'klarna_library/WPKlarnaHTML.php');
 $Klarna = new WPKlarna('part');
 
 $nzshpcrt_gateways[$num] = array(
