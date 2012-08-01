@@ -100,8 +100,8 @@ class WPKlarnaHTML {
 
         $Klarna = new WPKlarna();
         
-        $fetchPClassesURL = str_replace('&amp;', '&', wp_nonce_url(WPSC_URL . '/wpsc-merchants/klarna_library/klarnaAjax.php?action=updatePClasses&moduleType=' . $moduleType, 'pclass-update'));
-        $loadImageURL = WPSC_URL . '/wpsc-merchants/klarna_library/images/klarna/images/loader1.gif';
+        $fetchPClassesURL = str_replace('&amp;', '&', wp_nonce_url(KLARNA_URL . '/klarna_library/klarnaAjax.php?action=updatePClasses&moduleType=' . $moduleType, 'pclass-update'));
+        $loadImageURL = KLARNA_URL . '/klarna_library/images/klarna/images/loader1.gif';
 
         $js = <<<EOF
 <script type="text/javascript">
@@ -139,7 +139,7 @@ EOF;
 	    $output .= '<input type="hidden" name="klarna-module-type" value="' . $moduleType . '" />';
 	    
 	    // Klarna logo and module version
-	    $output .= '<tr><td colspan="2"><img src="' . WPSC_URL . '/wpsc-merchants/klarna_library/images/klarna/images/logo/logo_small.png" style="display:block;float:right;margin-left: 10px"/><em>Klarna module version ' . WPKlarna::$moduleVersion . '</em></td></tr>';
+	    $output .= '<tr><td colspan="2"><img src="' . KLARNA_URL . '/klarna_library/images/klarna/images/logo/logo_small.png" style="display:block;float:right;margin-left: 10px"/><em>Klarna module version ' . WPKlarna::$moduleVersion . '</em></td></tr>';
 	    
 	    // Update information
 	    if($Klarna->isUpdateAvailable($moduleType)) {
@@ -166,14 +166,14 @@ EOF;
 	    $output .= '<tr><td>Countries</td><td><div class="ui-widget-content multiple-select" style="margin:0;padding: 5px;">';
         $enabledCountries = explode(',', get_option('klarna_' . $moduleType . '_enabled_countries'));
         foreach($Klarna->countries AS $country) {
-            $output .= '<input type="checkbox" class="klarna-country-checkbox" id="klarna-country-' . $country->countryCode . '" name="klarna_' . $moduleType . '_country[' . $country->countryCode . '][status]" value="on" ' . (in_array($country->countryCode, $enabledCountries) ? 'checked="checked" ' : '') . '/><label for="klarna-country-' . $country->countryCode . '">&nbsp;<img src="' . WPSC_URL . '/wpsc-merchants/klarna_library/images/klarna/images/flags/' . $country->languageCode . '.png" />&nbsp;' . $country->countryName . '</label><br />';
+            $output .= '<input type="checkbox" class="klarna-country-checkbox" id="klarna-country-' . $country->countryCode . '" name="klarna_' . $moduleType . '_country[' . $country->countryCode . '][status]" value="on" ' . (in_array($country->countryCode, $enabledCountries) ? 'checked="checked" ' : '') . '/><label for="klarna-country-' . $country->countryCode . '">&nbsp;<img src="' . KLARNA_URL . '/klarna_library/images/klarna/images/flags/' . $country->languageCode . '.png" />&nbsp;' . $country->countryName . '</label><br />';
         }
 	        $output .= '</div><em>Tick the countries where you would like to offer Klarna ' . $moduleName . '.</em></td></tr>';
 
         foreach($Klarna->countries AS $country) {
             $output .= '<tr id="klarna-country-' . $country->countryCode  . '-fields" style="' . (!in_array($country->countryCode, $enabledCountries) ? 'display:none;' : '') . '">';
             $output .= '<td>&nbsp;</td>';
-            $output .= '<td><fieldset style="border:1px solid #DFDFDF;padding:0 10px 10px;"><legend style="padding:0 5px;"><img src="' . WPSC_URL . '/wpsc-merchants/klarna_library/images/klarna/images/flags/' . $country->languageCode . '.png" />&nbsp;' . $country->countryName . '</legend>
+            $output .= '<td><fieldset style="border:1px solid #DFDFDF;padding:0 10px 10px;"><legend style="padding:0 5px;"><img src="' . KLARNA_URL . '/klarna_library/images/klarna/images/flags/' . $country->languageCode . '.png" />&nbsp;' . $country->countryName . '</legend>
             <label for="eid-' . $country->countryCode . '" style="margin-right:4px;">Merchant ID:</label>
             <input type="text" name="klarna_' . $moduleType . '_country[' . $country->countryCode . '][eid]" id="eid-' . $country->countryCode . '" style="margin-bottom:10px;" value="' . get_option('klarna_' . $moduleType . '_eid_' . $country->countryCode) . '" /><br />
             <label for="secret-' . $country->countryCode . '" style="margin-right:4px;">Shared Secret:</label><input type="text" name="klarna_' . $moduleType . '_country[' . $country->countryCode . '][secret]" id="secret-' . $country->countryCode . '" style="margin-bottom:10px;" value="' . get_option('klarna_' . $moduleType . '_secret_' . $country->countryCode) . '" />';

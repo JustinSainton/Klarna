@@ -87,7 +87,7 @@ if($sAction == null) {
                     $str .= sprintf(" %-13s|", $pclass->getInvoiceFee());
                     $str .= sprintf(" %-10s|", $pclass->getStartFee());
                     $str .= sprintf(" %-11s|", $pclass->getMinAmount());
-                    $str .= sprintf(" %-7s",  '<img src="' . WPSC_URL . '/wpsc-merchants/klarna_library/images/klarna/images/flags/' . $Klarna->getLanguageCode() . '.png" border="0" title="' . $pclass->getCountry() . '" /> ');
+                    $str .= sprintf(" %-7s",  '<img src="' . KLARNA_URL . '/klarna_library/images/klarna/images/flags/' . $Klarna->getLanguageCode() . '.png" border="0" title="' . $pclass->getCountry() . '" /> ');
                     $str .= "<br />";
                 }
             }

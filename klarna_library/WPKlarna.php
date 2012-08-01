@@ -204,7 +204,7 @@ class WPKlarna extends Klarna {
             $this->moduleID = ++self::$numberOfActivatedModules;
         }
 
-        if($_POST['custom_gateway'] == 'wpsc_merchant_klarna_' . $moduleType)
+        if( isset( $_POST['custom_gateway'] ) && $_POST['custom_gateway'] == 'wpsc_merchant_klarna_' . $moduleType)
             add_filter('wpsc_checkout_form_validation', array(&$this, 'checkoutValidation'), 10, 1);
 
         if(
@@ -346,16 +346,16 @@ class WPKlarna extends Klarna {
             $contextFlag,               // KlarnaFlags::PRODUCT_PAGE or KlarnaFlags::CHECKOUT_PAGE
             $this,                      // Klarna object
             $pclassTypes,               // PClass types to fetch
-            WPSC_FILE_PATH . '/wpsc-merchants/klarna_library/');
+            KLARNA_FILE_PATH . '/klarna_library/');
 
         $this->API->addMultipleSetupValues(array(
             'eid' => $this->eid,
             'web_root' => WPSC_URL,
             'sum' => $this->invoiceFee,
-            'path_js' => WPSC_URL . '/wpsc-merchants/klarna_library/js/',
-            'path_img' => WPSC_URL . '/wpsc-merchants/klarna_library/images/klarna/',
-            'path_css' => WPSC_URL . '/wpsc-merchants/klarna_library/css/',
-            'path_ajax' => WPSC_URL . '/wpsc-merchants/klarna_library/',
+            'path_js' => KLARNA_URL . '/klarna_library/js/',
+            'path_img' => KLARNA_URL . '/klarna_library/images/klarna/',
+            'path_css' => KLARNA_URL . '/klarna_library/css/',
+            'path_ajax' => KLARNA_URL . '/klarna_library/',
             'ysal_display' => ($this->askForYearlySalary() ? 'block' : 'none'),
             'agb_link' => $this->getKlarnaOption('agb_url')
         ));        
@@ -684,12 +684,12 @@ EOF;
 
             if(!empty($this->klarnaErrors)) {
                 $_SESSION['wpsc_checkout_misc_error_messages'][] = '<div style="border:1px solid #7BA7C9;padding:10px;">
-                <img src="' . WPSC_URL . '/wpsc-merchants/klarna_library/images/klarna/images/logo/klarna_logo.png" /><br />' .
+                <img src="' . KLARNA_URL . '/klarna_library/images/klarna/images/logo/klarna_logo.png" /><br />' .
                 '<ul style="list-style: square inside none ! important;"><li>' .
                 implode('</li><li>', $this->klarnaErrors).'</li></ul></div>';
             } else {
                 $_SESSION['wpsc_checkout_misc_error_messages'][] = '<div style="border:1px solid #7BA7C9;padding:10px;">
-                <img src="' . WPSC_URL . '/wpsc-merchants/klarna_library/images/klarna/images/logo/klarna_logo.png" /><br />' .
+                <img src="' . KLARNA_URL . '/klarna_library/images/klarna/images/logo/klarna_logo.png" /><br />' .
                 $this->fetchFromLanguagePack('error_title_1') .
                 '<br/><ul style="list-style: square inside none ! important;"><li>' .
                 implode('</li><li>', $this->validationErrors).'</li></ul><br/>' .
@@ -1124,7 +1124,7 @@ EOF;
                     utf8_decode($billingCountry));
             } catch(Exception $e) {
                 $Merchant->set_error_message('<div style="border:1px solid #7BA7C9;padding:10px;">
-                <img src="' . WPSC_URL . '/wpsc-merchants/klarna_library/images/klarna/images/logo/klarna_logo.png" /><br />' .
+                <img src="' . KLARNA_URL . '/klarna_library/images/klarna/images/logo/klarna_logo.png" /><br />' .
                 utf8_encode($e->getMessage() . " (#" . $e->getCode() . ")") . '</div>');
                 return false;
             }
@@ -1164,7 +1164,7 @@ EOF;
                 $pclassId);
         } catch(Exception $e) {
             $Merchant->set_error_message('<div style="border:1px solid #7BA7C9;padding:10px;">
-            <img src="' . WPSC_URL . '/wpsc-merchants/klarna_library/images/klarna/images/logo/klarna_logo.png" /><br />' .
+            <img src="' . KLARNA_URL . '/klarna_library/images/klarna/images/logo/klarna_logo.png" /><br />' .
             utf8_encode($e->getMessage() . " (#" . $e->getCode() . ")") . '</div>');
             return false;
         }
@@ -1182,8 +1182,8 @@ EOF;
     
     public function getPartPaymentBox($productPrice) {
         $this->API->addMultipleSetupValues(array(
-            'path_img' => WPSC_URL . '/wpsc-merchants/klarna_library/',
-            'path_css' => WPSC_URL . '/wpsc-merchants/klarna_library/klarna/productPrice/default/',
+            'path_img' => KLARNA_URL . '/klarna_library/',
+            'path_css' => KLARNA_URL . '/klarna_library/klarna/productPrice/default/',
             'asterisk' => ($this->getCountryCode() == 'de' ? '*' : '')
         ));
         
@@ -1219,9 +1219,9 @@ EOF;
         $aInputValues['monthTable'] = $sTableHtml;
         $aInputValues['eid'] = $this->eid;
         $aInputValues['country'] = $this->getCountryCode();
-        $aInputValues['nlBanner'] = ($this->getCountryCode() == 'nl' ? '<div class="nlBanner"><img src="' . WPSC_URL . '/wpsc-merchants/klarna_library/images/klarna/account/notice_nl.jpg" /></div>' : '');
+        $aInputValues['nlBanner'] = ($this->getCountryCode() == 'nl' ? '<div class="nlBanner"><img src="' . KLARNA_URL . '/klarna_library/images/klarna/account/notice_nl.jpg" /></div>' : '');
   
-        return $this->API->retrieveHTML($aInputValues, null, WPSC_FILE_PATH . '/wpsc-merchants/klarna_library/html/productPrice/default/layout.html');
+        return $this->API->retrieveHTML($aInputValues, null, KLARNA_FILE_PATH . '/klarna_library/html/productPrice/default/layout.html');
     }
     
     /**
@@ -1267,7 +1267,7 @@ EOF;
      * @author Niklas Malmgren
      **/
     public function fetchFromLanguagePack($sTitle) {
-        return KlarnaAPI::fetchFromLanguagePack($sTitle, $this->getCountryCode(), WPSC_FILE_PATH . '/wpsc-merchants/klarna_library/');
+        return KlarnaAPI::fetchFromLanguagePack($sTitle, $this->getCountryCode(), KLARNA_FILE_PATH . '/klarna_library/');
     }
     
     /**

@@ -1,10 +1,11 @@
 <?php
+global $num, $nzshpcrt_gateways;
 
-require_once(WPSC_FILE_PATH . '/wpsc-merchants/klarna_library/WPKlarna.php');
-require_once(WPSC_FILE_PATH . '/wpsc-merchants/klarna_library/WPKlarnaHTML.php');
+require_once('klarna_library/WPKlarna.php');
+require_once('klarna_library/WPKlarnaHTML.php');
 $Klarna = new WPKlarna('spec');
 
-$nzshpcrt_gateways[$num] = array(
+$nzshpcrt_gateways[$num++] = array(
 	'name' => 'Klarna Special Campaigns' . $Klarna->updateMessage,
 	'api_version' => 2.0,
     'class_name' => 'wpsc_merchant_klarna_spec',

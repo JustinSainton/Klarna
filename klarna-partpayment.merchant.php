@@ -1,10 +1,11 @@
 <?php
+global $num, $nzshpcrt_gateways;
 
 require_once( 'klarna_library/WPKlarna.php');
 require_once( 'klarna_library/WPKlarnaHTML.php');
 $Klarna = new WPKlarna('part');
 
-$nzshpcrt_gateways[$num] = array(
+$nzshpcrt_gateways[$num++] = array(
 	'name' => 'Klarna Part Payment' . $Klarna->updateMessage,
 	'api_version' => 2.0,
     'class_name' => 'wpsc_merchant_klarna_part',

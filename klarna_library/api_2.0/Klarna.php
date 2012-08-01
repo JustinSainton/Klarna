@@ -730,7 +730,7 @@ class Klarna {
             case 'nl':
                 return KlarnaCountry::NL;
             default:
-                throw new KlarnaException('Error in ' . __METHOD__ . ': Unknown country! ("'.$code.'")', 50002);
+                return KlarnaCountry::SE;
         }
     }
 
@@ -869,7 +869,7 @@ class Klarna {
             case 'sek':
                 return KlarnaCurrency::SEK;
             default:
-                throw new KlarnaException('Error in ' . __METHOD__ . ': Unknown currency! ('.$code.')', 50004);
+                return KlarnaCurrency::SEK;
         }
     }
 
