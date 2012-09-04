@@ -84,7 +84,7 @@ class WPKlarnaHTML {
      * @author Niklas Malmgren
      **/
     static function getSettingsForm($moduleType) {
-        global $wpsc_purchlog_statuses;
+        global $wpsc_purchlog_statuses, $wpdb;
         
         switch($moduleType) {
             case 'invoice':
@@ -98,38 +98,55 @@ class WPKlarnaHTML {
                 break;
         }
 
-        $Klarna = new WPKlarna();
-        
-        $fetchPClassesURL = str_replace('&amp;', '&', wp_nonce_url(KLARNA_URL . '/klarna_library/klarnaAjax.php?action=updatePClasses&moduleType=' . $moduleType, 'pclass-update'));
+        $Klarna       = new WPKlarna();
         $loadImageURL = KLARNA_URL . '/klarna_library/images/klarna/images/loader1.gif';
-
+        $nonce        = wp_create_nonce( 'klarna-pay-classes' ); 
         $js = <<<EOF
 <script type="text/javascript">
-    jQuery(document).ready(function() {
-        jQuery('input[name="user_defined_name[wpsc_merchant_klarna_invoice]"]').parentsUntil('tbody').hide();
-        jQuery('input[name="user_defined_name[wpsc_merchant_klarna_part]"]').parentsUntil('tbody').hide();
-        jQuery('input[name="user_defined_name[wpsc_merchant_klarna_spec]"]').parentsUntil('tbody').hide();
-        jQuery('.gateway_settings td').css({"padding-bottom" : "15px"});
-        jQuery('input.klarna-invoice-fee').each(function() {
-            if(!jQuery(this).val()) {
-                jQuery(this).val('0');
+    jQuery(document).ready(function($) {
+       $('input[name="user_defined_name[wpsc_merchant_klarna_invoice]"]').parentsUntil('tbody').hide();
+       $('input[name="user_defined_name[wpsc_merchant_klarna_part]"]').parentsUntil('tbody').hide();
+        $('input[name="user_defined_name[wpsc_merchant_klarna_spec]"]').parentsUntil('tbody').hide();
+        $('.gateway_settings td').css({"padding-bottom" : "15px"});
+       $('input.klarna-invoice-fee').each(function() {
+            if(!$(this).val()) {
+                $(this).val('0');
             }
         });
-        jQuery('.klarna-country-checkbox').change(function() {
-            var countryRowId = jQuery(this).attr('id') + '-fields';
-            if(jQuery(this).attr('checked')) {
-                jQuery('#' + countryRowId).show();
+       $('.klarna-country-checkbox').change(function() {
+            var countryRowId = $(this).attr('id') + '-fields';
+            if($(this).attr('checked')) {
+                $('#' + countryRowId).show();
             } else {
-                jQuery('#' + countryRowId).hide();
+                $('#' + countryRowId).hide();
             }
+        });
+        $('a.update_pay_classes').click(function(e){
+            e.preventDefault();
+
+            var link = $(this);
+            
+            link.css('cursor','wait');
+            $('h2.nav-tab-wrapper').after('<div id="setting-error-settings_updated" class="updated settings-error updating-pc-classes"><p>Fetching PClasses, please wait ... <img src="{$loadImageURL}" alt="" style="margin-bottom:-3px" /></p></div>');
+            var callback = function( response ) {
+                if ( response.success ) {
+                    link.css('cursor','pointer');
+                    $('div.updating-pc-classes').html(response.success).delay(7500).fadeOut(300);
+                }
+
+                if ( response.errors ) {
+                    $('div.updating-pc-classes').html(response.errors).delay(7500).fadeOut(300);
+                }
+
+            };
+            data = {
+                action   : 'update_klarna_classes',
+                module   : '{$moduleType}',
+                no_hacky : '{$nonce}'
+            };
+            $.post(ajaxurl, data, callback, 'json');
         });
     });
-    function updatePclasses(elem) {
-        jQuery(elem).css('cursor','wait');
-        jQuery('td.select_gateway').parent().html('<td colspan="2"><p>Fetching PClasses, please wait ... <img src="{$loadImageURL}" alt="" /></p></td>').load('{$fetchPClassesURL}', function() {
-            jQuery(elem).css('cursor','pointer');
-        });
-    }
 
 </script>
 
@@ -149,7 +166,7 @@ EOF;
 	    // Fetch PClass link
 	    if($moduleType != 'invoice') {
 	        $pleaseUpdate = (!$Klarna->pClassesInDatabase() ? 'No PClasses in database - ' : '');
-    	    $output .= '<tr><td colspan="2">' . $pleaseUpdate . $numberOfPClasses . '<a href="#" onclick="updatePclasses(this);return false;">Click here to update your PClasses</a></td></tr>';
+    	    $output .= '<tr><td colspan="2">' . $pleaseUpdate . $numberOfPClasses . '<a href="#" class="update_pay_classes">Click here to update your PClasses</a></td></tr>';
     	}
 	    
 	    // Enable and disable module
@@ -195,6 +212,7 @@ EOF;
 
         $serverLiveChecked = (get_option('klarna_' . $moduleType . '_server') == 'live' ? 'checked="checked" ' : '');
         $serverBetaChecked = (get_option('klarna_' . $moduleType . '_server') == 'beta' ? 'checked="checked" ' : '');
+
 	    $output .= <<<EOF
     <tr>
         <td>Order Status</td>

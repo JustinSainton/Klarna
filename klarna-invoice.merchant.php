@@ -1,10 +1,13 @@
 <?php
-global $num, $nzshpcrt_gateways;
+global $num, $klarna_gateways;
+
 require_once( 'klarna_library/WPKlarna.php' );
 require_once( 'klarna_library/WPKlarnaHTML.php' );
 $Klarna = new WPKlarna('invoice');
 
-$nzshpcrt_gateways[$num++] = array(
+$num = count( $klarna_gateways ) + 1;
+
+$klarna_gateways[$num] = array(
 	'name' => 'Klarna Invoice' . $Klarna->updateMessage,
 	'api_version' => 2.0,
     'class_name' => 'wpsc_merchant_klarna_invoice',
@@ -15,17 +18,13 @@ $nzshpcrt_gateways[$num++] = array(
 	'internalname' => 'wpsc_merchant_klarna_invoice'
 );
 
-
-if($Klarna->enabled) {
-    if(!defined('WP_ADMIN') || WP_ADMIN !== true) {
-        $gateway_checkout_form_fields[$nzshpcrt_gateways[$num]['internalname']] =
-            $Klarna->getCheckoutForm();
-        $payment_gateway_names = (array)get_option('payment_gateway_names');
-        $payment_gateway_names['wpsc_merchant_klarna_invoice'] = $Klarna->getTitle();
-        update_option('payment_gateway_names', $payment_gateway_names);
-    }
-} else
-    unset($nzshpcrt_gateways[$num]);
+if ( $Klarna->enabled && ! is_admin() ) {
+    global $gateway_checkout_form_fields;
+    $gateway_checkout_form_fields['wpsc_merchant_klarna_invoice'] = $Klarna->getCheckoutForm();
+    $payment_gateway_names = (array) get_option('payment_gateway_names');
+    $payment_gateway_names['wpsc_merchant_klarna_invoice'] = $Klarna->getTitle();
+    update_option('payment_gateway_names', $payment_gateway_names);
+}
 
 class wpsc_merchant_klarna_invoice extends wpsc_merchant {
     /**
@@ -54,6 +53,7 @@ class wpsc_merchant_klarna_invoice extends wpsc_merchant {
      **/
     public function submit() {
         global $wpdb;
+
         $result = $this->Klarna->checkoutSubmit(&$this);
         
         if($result === false) {

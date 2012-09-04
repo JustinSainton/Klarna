@@ -216,11 +216,104 @@ class WPKlarna extends Klarna {
             $this->checkoutFormValidates = $this->runCheckoutValidation();
             $this->validationHasRun = true;
         }
-        
-        if(defined('WP_ADMIN') && WP_ADMIN === true && $this->isUpdateAvailable()) {
+
+        if ( is_admin() && $this->isUpdateAvailable() )
             $this->updateMessage = '&nbsp;&middot;&nbsp;UPDATE AVAILABLE';
+
+        //Proper AJAX Handlers
+        add_action( 'wp_ajax_update_klarna_classes', array( $this, 'klarna_update_pc_classes' ) );
+
+    }
+
+    public static function klarna_update_pc_classes() {
+        
+        check_ajax_referer( 'klarna-pay-classes', 'no_hacky' );
+      
+        $error = array();
+
+        $sModuleType = (string) $_POST['module'];
+
+        if ( '' == $sModuleType )
+            die( json_encode( array( 'errors' => '<td>Error: no module defined</td>' ) ) );
+
+        $moduleTypes = array( 'part', 'spec' );
+
+        if ( get_option( 'klarna_part_enabled' ) == 'on' )
+            $moduleType = 'part';
+        elseif ( get_option( 'klarna_spec_enabled' ) == 'on' )
+            $moduleType = 'spec';
+        else
+            die( json_encode( array( 'errors' => '<td>Error: neither part payment module nor special campaigns module enabled</td>' ) ) );
+
+        $enabledPartCountries = explode( ',', get_option( 'klarna_part_enabled_countries' ) );
+        $enabledSpecCountries = explode( ',', get_option( 'klarna_spec_enabled_countries' ) );
+
+        foreach ( $enabledPartCountries as $countryCode ) {
+            $eid    = get_option( 'klarna_part_eid_' . $countryCode );
+            $secret = get_option( 'klarna_part_secret_' . $countryCode );
+            if ( $eid && $secret )
+                $enabledCountries[$countryCode][] = array( 'eid' => $eid, 'secret' => $secret );
         }
 
+        foreach ( $enabledSpecCountries as $countryCode ) {
+            $eid   = get_option( 'klarna_spec_eid_' . $countryCode );
+            $secret = get_option( 'klarna_spec_secret_' . $countryCode );
+            if ( $eid && $secret ) {
+                if ( ! isset( $enabledCountries[$countryCode] ) || $enabledCountries[$countryCode][0]['eid'] != $eid )
+                    $enabledCountries[$countryCode][] = array( 'eid' => $eid, 'secret' => $secret );
+            }
+        }
+
+        $str = '<h3>Klarna PClasses updated</h3>';
+        $numFound = 0;
+
+        $mode = ( get_option( 'klarna_' . $moduleType . '_server' ) == 'beta' ? Klarna::BETA : Klarna::LIVE );
+
+        $Klarna = new WPKlarna( $moduleType );
+
+        $str .= '<div style="border: 1px solid #8CC63F; background-color: #D7EBBC; padding: 10px; font-family: Arial, Verdana; font-size: 11px; margin: 10px">';
+        $str .= '<pre>';
+        $str .= "<b>id  | description                             | months | interest rate | handling fee | start fee | min amount | country</b><br /><hr size='1' style='border-top: 1px solid #8CC63F;'/>";
+
+        foreach ( $enabledCountries as $countryCode => $countryEIDs ) {
+            foreach ( $countryEIDs as $countryCredentials ) {
+                if ( ! in_array( strtolower( $countryCode ), array( 'se', 'no', 'dk', 'fi', 'de', 'nl' ) ) )
+                    continue;
+                $eid    = $countryCredentials['eid'];
+                $secret = $countryCredentials['secret'];
+                
+                if ( $eid && $secret ) {
+                    $Klarna->config( $eid, $secret, $countryCode, null, null, $mode, 'wp', 'klarnapclasses', ( $mode == Klarna::LIVE ) );
+                    try {
+                        $Klarna->fetchPClasses($countryCode);
+                    } catch ( Exception $e ) {
+                        continue;
+                    }
+                    foreach ( $Klarna->getPClasses() as $pclass ) {
+                        $numFound++;
+                        $addition  = strlen( utf8_encode( $pclass->getDescription() ) );
+                        $addition2 = strlen( html_entity_decode( $pclass->getDescription() ) );
+                        $sum       = ( $addition == $addition2 ? 40 : 40 + ( $addition - $addition2 ) );
+
+                        $str .= sprintf( "%-4s|"            , $pclass->getId() );
+                        $str .= sprintf( " %-" . $sum . "s|", $pclass->getDescription() );
+                        $str .= sprintf( " %-7s|"           , $pclass->getMonths() );
+                        $str .= sprintf( " %-14s|"          , $pclass->getInterestRate() );
+                        $str .= sprintf( " %-13s|"          , $pclass->getInvoiceFee() );
+                        $str .= sprintf( " %-10s|"          , $pclass->getStartFee() );
+                        $str .= sprintf( " %-11s|"          , $pclass->getMinAmount() );
+                        $str .= sprintf( " %-7s"            ,  '<img src="' . KLARNA_URL . '/klarna_library/images/klarna/images/flags/' . $Klarna->getLanguageCode() . '.png" border="0" title="' . $pclass->getCountry() . '" /> ' );
+                        $str .= "<br />";
+                    }
+                }
+            }
+        }
+        $str .= "</pre></div>";
+
+        $str .= '<p>Found ' . $numFound . ' PClasses </p>';
+        
+        echo json_encode( array( 'success' => '<td>' . $str . '</td>' ) );
+        die;
     }
     
     /**
@@ -232,7 +325,7 @@ class WPKlarna extends Klarna {
     public function WPInit() {
         global $wpsc_cart;
 
-        if(defined('WP_ADMIN') && WP_ADMIN === true)
+        if ( is_admin() )
             return true;
         
         if($this->moduleType == null || $this->moduleType == '')
@@ -258,60 +351,7 @@ class WPKlarna extends Klarna {
 
         $mode = ($this->getKlarnaOption('server') == 'beta' ? Klarna::BETA : Klarna::LIVE);
 
-        if(is_array($wpsc_cart->cart_items) && count($wpsc_cart->cart_items) >= 1) {
-            $Taxes = new wpec_taxes_controller();
-            $taxCountry = $wpsc_cart->delivery_country;
-            $taxRate = $Taxes->wpec_taxes->wpec_taxes_get_rate(
-                $taxCountry,
-                $Taxes->wpec_taxes_retrieve_region());
-            if(!isset($taxRate['rate']))
-                $taxRate['rate'] = 0;
-
-            $shipmentCost = 0;
-
-            // Sum value of products in shopping cart
-            $count = 0;
-            $this->totalCartValueIncludingTax = 0;
-            foreach($wpsc_cart->cart_items AS $item) {
-                extract($Taxes->wpec_taxes_calculate_included_tax($item), EXTR_PREFIX_ALL, 'item');
-                if(!isset($item_rate))
-                    $item_rate = 0;
-                if($Taxes->wpec_taxes_isincluded()) {
-                    $item_price = $item->unit_price;
-                } else {
-                    $item_price = $item->unit_price * ( ($item_rate / 100) + 1);
-                }
-                if($item->shipping > 0)
-                    $shipmentCost += $item->shipping;
-                if(isset($_POST['wpsc_update_quantity']) && $_POST['wpsc_update_quantity'] == 'true' && $count++ == $_POST['key'])
-                    $item_quantity = $_POST['quantity'];
-                else
-                    $item_quantity = $item->quantity;
-                $this->totalCartValueIncludingTax += ($item_price * $item_quantity);
-            }
-
-
-            // Add shipping cost        
-            if($wpsc_cart->base_shipping > 0) {
-                $shipmentCost += $wpsc_cart->base_shipping;
-                $shipmentTaxRate = 0;
-                
-                // Check if to apply tax to shipping cost
-                if($taxRate['shipping']) {
-                    if(!$Taxes->wpec_taxes_isincluded())
-                        $shipmentCost *= (($taxRate['rate'] / 100) + 1);
-                }
-                $this->totalCartValueIncludingTax += $shipmentCost;
-            }
-            
-            // Deduct coupon value
-            if($wpsc_cart->coupons_amount > 0) {
-                $couponsAmount = $wpsc_cart->coupons_amount;
-                if(!$Taxes->wpec_taxes_isincluded())
-                    $couponsAmount *= (($taxRate['rate'] / 100) + 1);
-                $this->totalCartValueIncludingTax -= $couponsAmount;
-            }
-        }
+        $this->totalCartValueIncludingTax = wpsc_cart_total( false );
 
         $this->config($this->eid, $this->secret, $this->getCountryCode(), null, null, $mode, 'wp', 'klarnapclasses', ($mode == Klarna::LIVE));
         
@@ -335,7 +375,7 @@ class WPKlarna extends Klarna {
             $sum = $this->totalCartValueIncludingTax;
         }
         
-        if(ENABLE_KLARNA_ILT != 1 && $this->getCountry() == KlarnaCountry::NL && $sum > 250)
+        if ( self::ENABLE_KLARNA_ILT != 1 && $this->getCountry() == KlarnaCountry::NL && $sum > 250 )
             return false;
 
         $this->API = new KlarnaAPI(
@@ -543,13 +583,10 @@ class WPKlarna extends Klarna {
 
         $params = $this->getParams();
         
-        if(isset($_POST['shippingSameBilling']) && $_POST['shippingSameBilling'] == 'true')
-            $addressPrefix = 'billing';
-        else
-            $addressPrefix = 'shipping';
+        $addressPrefix = ( isset( $_POST['shippingSameBilling'] ) && 'true' == $_POST['shippingSameBilling'] )  ? 'billing' : 'shipping';
 
-        // Get the values from the WPE forms
-        foreach($wpsc_checkout->checkout_items AS $formData) {
+        // Get the values from the WPEC forms
+        foreach($wpsc_checkout->checkout_items as $formData) {
             $klarnaValue = '';
             switch($formData->unique_name) {
                 case $addressPrefix . 'firstname':
@@ -625,7 +662,6 @@ class WPKlarna extends Klarna {
         } else {
             $balloons = '';
         }   
-
         return $balloons . $this->API->retrieveHTML($params, $values, null, array('name' => 'default'));
     }
     
@@ -747,9 +783,9 @@ EOF;
 
         if($this->getCountryCode() == 'se') {
             $pno_enc = $this->getPNOEncoding();
-            if(!KlarnaEncoding::checkPNO($klarnaCustomerInfo['socialNumber'], $pno_enc))
-                $errors[] = $this->fetchFromLanguagePack('klarna_personalOrOrganisatio_number');
-            if(strlen($klarnaCustomerInfo['emailAddress']) == 0)
+            if ( ! KlarnaEncoding::checkPNO( $klarnaCustomerInfo['socialNumber'], $pno_enc ) )
+                $errors[] = $this->fetchFromLanguagePack( 'klarna_personalOrOrganisatio_number' );
+            if ( strlen( $klarnaCustomerInfo['emailAddress'] ) == 0 )
                 $errors[] = $this->fetchFromLanguagePack('email_address');
 
             $addrs = array();
@@ -1156,16 +1192,20 @@ EOF;
                 default:
                     $pclassId = KlarnaPClass::INVOICE;
             }
-
+            
             $result = $this->addTransaction(
                 $klarnaPno,
                 ($this->getCountry() == KlarnaCountry::DE || $this->getCountry() == KlarnaCountry::NL) ? $klarnaCustomerInfo['gender'] : null,
                 KlarnaFlags::NO_FLAG,
                 $pclassId);
         } catch(Exception $e) {
-            $Merchant->set_error_message('<div style="border:1px solid #7BA7C9;padding:10px;">
+
+            $error = '<div style="border:1px solid #7BA7C9;padding:10px;">
             <img src="' . KLARNA_URL . '/klarna_library/images/klarna/images/logo/klarna_logo.png" /><br />' .
-            utf8_encode($e->getMessage() . " (#" . $e->getCode() . ")") . '</div>');
+            utf8_encode($e->getMessage() . " (#" . $e->getCode() . ")") . '</div>';
+
+            $Merchant->set_error_message( $error );
+
             return false;
         }
 
@@ -1220,7 +1260,6 @@ EOF;
         $aInputValues['eid'] = $this->eid;
         $aInputValues['country'] = $this->getCountryCode();
         $aInputValues['nlBanner'] = ($this->getCountryCode() == 'nl' ? '<div class="nlBanner"><img src="' . KLARNA_URL . '/klarna_library/images/klarna/account/notice_nl.jpg" /></div>' : '');
-  
         return $this->API->retrieveHTML($aInputValues, null, KLARNA_FILE_PATH . '/klarna_library/html/productPrice/default/layout.html');
     }
     

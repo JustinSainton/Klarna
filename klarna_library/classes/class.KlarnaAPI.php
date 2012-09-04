@@ -91,7 +91,7 @@ class KlarnaAPI {
 	 *
 	 * @var string
 	 */
-	private $sPath;
+	public $sPath;
 
 	/**
 	 * The ILT questions
@@ -121,7 +121,7 @@ class KlarnaAPI {
 		$this->validateLangISO($a_sLangISO);
 
 		// Set the klarna object
-		$this->oKlarna	= &$a_oKlarna;
+		$this->oKlarna = &$a_oKlarna;
 
 		// Set the default input names
 		$this->aInputParameters['mobilePhone'] 	= "mobilePhone";
@@ -266,7 +266,7 @@ class KlarnaAPI {
 		}
 
 		/**
-		 * @todo Check for file and trow error if missing
+		 * @todo Check for file and throw error if missing
 		 */
 		if ($a_sHTMLFile != null)
 		{
@@ -591,7 +591,7 @@ class KlarnaAPI {
 	 * @param	string	$sText	The text to fech
 	 * @return	string
 	 */
-	public function fetchFromLanguagePack ($sText, $sISO = null, $sPath = null)
+	public function fetchFromLanguagePack ($sText, $sISO = null, $sPath = '' )
 	{
 		if ($sISO == null)
 		{
@@ -606,12 +606,10 @@ class KlarnaAPI {
 			$sISO	= KlarnaAPI::getISOCode($sISO);
 		}
 
-		if ($this->sPath != null)
-		$sPath = $this->sPath;
 
-		$oXml	= simplexml_load_file(($sPath != null ? $sPath : "") . 'klarna_files/klarna_language.xml');
-		$aResult= (array)@$oXml->xpath("//string[@id='$sText']/$sISO");
-		$aResult= (array)@$aResult[0];
+		$oXml	 = simplexml_load_file( ( ( isset( $this->sPath ) && ! is_null( $this->sPath ) ) ? $this->sPath : $sPath ) . 'klarna_files/klarna_language.xml');
+		$aResult = (array) @$oXml->xpath("//string[@id='$sText']/$sISO");
+		$aResult = (array )@$aResult[0];
 
 		return @$aResult[0];
 	}
