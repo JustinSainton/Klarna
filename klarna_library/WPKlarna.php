@@ -475,7 +475,7 @@ class WPKlarna extends Klarna {
 
             // Use the first language (or country) in the Accept-Language header
             $matches = array();
-            $languages = strtolower(trim($_SERVER['HTTP_ACCEPT_LANGUAGE']));
+            $languages = isset( $_SERVER['HTTP_ACCEPT_LANGUAGE'] ) ? strtolower( trim( $_SERVER['HTTP_ACCEPT_LANGUAGE'] ) ) : 'sv-SV,en;q=0.8';
             preg_match('/^(?P<lang>[a-zA-Z]{2})(-(?P<country>[a-zA-Z]{2}))?([,; ].*)?/', $languages, $matches);
             if(isset($matches['lang'])) {
                 if(isset($matches['country'])) {
@@ -585,6 +585,8 @@ class WPKlarna extends Klarna {
         
         $addressPrefix = ( isset( $_POST['shippingSameBilling'] ) && 'true' == $_POST['shippingSameBilling'] )  ? 'billing' : 'shipping';
 
+        $values = array();
+
         // Get the values from the WPEC forms
         foreach($wpsc_checkout->checkout_items as $formData) {
             $klarnaValue = '';
@@ -610,9 +612,9 @@ class WPKlarna extends Klarna {
                 default:
                     break;
             }
-            if($klarnaValue) {
-                if(is_array($klarnaValue)) {
-                    foreach($klarnaValue AS $value) {
+            if ( $klarnaValue && isset( $_SESSION['wpsc_checkout_saved_values'] ) ) {
+                if ( is_array( $klarnaValue ) ) {
+                    foreach ( $klarnaValue as $value ) {
                         $values[$value] = $_SESSION['wpsc_checkout_saved_values'][$formData->id];
                     }
                 } else {
@@ -652,7 +654,7 @@ class WPKlarna extends Klarna {
         if(isset($_SESSION[$wpsc_cart->unique_id]['klarnaCustomerInfo']))
             $values = array_merge($values, $_SESSION[$wpsc_cart->unique_id]['klarnaCustomerInfo']);
 
-        if(ENABLE_KLARNA_ILT == 1 && is_array($this->iltQuestions) && count($this->iltQuestions) >= 1)
+        if ( self::ENABLE_KLARNA_ILT == 1 && is_array($this->iltQuestions) && count($this->iltQuestions) >= 1)
             $this->API->setIltQuestions($this->iltQuestions);
         
         // Some things should only be output once (i.e. in the first activated module)
@@ -662,6 +664,7 @@ class WPKlarna extends Klarna {
         } else {
             $balloons = '';
         }   
+
         return $balloons . $this->API->retrieveHTML($params, $values, null, array('name' => 'default'));
     }
     
@@ -937,12 +940,14 @@ EOF;
         $checkoutFormFields = array();
         $wpsc_checkout = new wpsc_checkout();
         foreach($wpsc_checkout->checkout_items AS $formData) {
-            if(is_array($_POST['collected_data'][$formData->id]))
+            if ( isset( $_POST['collected_data'][$formData->id] ) && is_array( $_POST['collected_data'][$formData->id] ) )
                 $value = $_POST['collected_data'][$formData->id][0];
             else
-                $value = $_POST['collected_data'][$formData->id];
-            if(is_string($value))
+                $value = isset( $_POST['collected_data'][$formData->id] ) ? $_POST['collected_data'][$formData->id] : '';
+            
+            if ( is_string( $value ) )
                 $value = utf8_decode($value);
+
             $checkoutFormFields[$formData->unique_name] = $value;
         }
 
@@ -967,7 +972,7 @@ EOF;
 
         $this->iltQuestions = array();
         $klarnaCustomerInfo['ilt'] = array();
-        if($valid == true && ENABLE_KLARNA_ILT == 1) {
+        if($valid == true && self::ENABLE_KLARNA_ILT == 1) {
             $this->setAddress(KlarnaFlags::IS_SHIPPING, $this->addrs);
             try {
                 $iltQuestions = array();
@@ -1397,7 +1402,7 @@ EOF;
             $form_data = $wpdb->get_results("SELECT * FROM `" . WPSC_TABLE_CHECKOUT_FORMS . "` WHERE `active` = '1'", ARRAY_A);
         
             foreach($form_data as $form_field) {
-                $id = $rekeyed_input[$form_field['id']]['id'];
+                $id = isset( $rekeyed_input[$form_field['id']]['id'] ) ? $rekeyed_input[$form_field['id']]['id'] : '';
                 switch($form_field['unique_name']) {
                     case 'shippingfirstname':
                         if($this->addrs->isCompany)

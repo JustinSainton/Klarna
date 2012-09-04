@@ -86,14 +86,14 @@ class WPKlarnaHTML {
     static function getSettingsForm($moduleType) {
         global $wpsc_purchlog_statuses, $wpdb;
         
-        switch($moduleType) {
+        switch( $moduleType ) {
             case 'invoice':
                 $moduleName = 'Invoice';
                 break;
             case 'part':
                 $moduleName = 'Part Payment';
                 break;
-            case 'invoice':
+            case 'spec':
                 $moduleName = 'Special Campaigns';
                 break;
         }
@@ -166,7 +166,7 @@ EOF;
 	    // Fetch PClass link
 	    if($moduleType != 'invoice') {
 	        $pleaseUpdate = (!$Klarna->pClassesInDatabase() ? 'No PClasses in database - ' : '');
-    	    $output .= '<tr><td colspan="2">' . $pleaseUpdate . $numberOfPClasses . '<a href="#" class="update_pay_classes">Click here to update your PClasses</a></td></tr>';
+    	    $output .= '<tr><td colspan="2">' . $pleaseUpdate . '<a href="#" class="update_pay_classes">Click here to update your PClasses</a></td></tr>';
     	}
 	    
 	    // Enable and disable module
