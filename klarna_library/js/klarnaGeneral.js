@@ -479,12 +479,13 @@ function getAddress (box, companyAllowed, field)
                 else if(klarnaSelectedPayment.indexOf('spec') != -1)
                     paymentMethod = 'spec';
 
-                // Get the new klarna_box
-                $.ajax({
-                    type: "GET",
-                    url: global_ajax_file,
-                    data: "action=getAddress&country="+global_countryCode+"&pno="+pno_value+"&type="+paymentMethod,
-                    success: function(xml){
+                var data_obj = {
+                        action: 'get_klarna_address',
+                        country: global_countryCode,
+                        pno: pno_value,
+                        type: paymentMethod
+                };
+                var success_callback =  function(xml){
                         $(xml).find('error').each(function() {
                             var msg = $(this).find('message').text();
                             var code = $(this).find('code').text();
@@ -608,8 +609,9 @@ function getAddress (box, companyAllowed, field)
                             });
                         });
                         address_busy = false;
-                    }
-                });
+                };
+                // Get the new klarna_box
+                $.post( wpsc_ajax.ajaxurl, data_obj, success_callback );
             }
         }
     }
