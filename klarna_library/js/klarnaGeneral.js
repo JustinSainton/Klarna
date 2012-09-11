@@ -833,11 +833,8 @@ function changeLanguage (replaceBox, paramNames, paramValues, newIso, country, t
         if((typeof(inputValue) != "undefined"))
             valueString += "&values["+paramValues[i]+"]="+inputValue;
     }
-    $.ajax({
-        type: "GET",
-        url: global_ajax_file,
-        data: 'action=languagepack&subAction=klarna_box&type='+type+'&newIso='+newIso+'&country='+country+'&sum='+global_sum+'&flag='+global_flag+valueString+paramString,
-        success: function(response){
+
+    var callback = function( response ) {
             hideRedBaloon();
             if ($(response).find('.klarna_box'))
             {
@@ -888,6 +885,16 @@ function changeLanguage (replaceBox, paramNames, paramValues, newIso, country, t
             else {
                 alert("Error, block not found. Response:\n\n"+response);
             }
-        }
-    });
+    };
+    var data = {
+        action       : 'languagepack',
+        subAction    :  'klarna_box',
+        payment_type : type,
+        newIso_type  : newIso,
+        country_type : country, 
+        sum          : global_sum,
+        flag         : global_flag + valueString + paramString
+    };
+
+    $.post(ajaxurl, data, callback, 'html');
 }

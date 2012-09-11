@@ -91,7 +91,7 @@ class KlarnaAPI {
 	 *
 	 * @var string
 	 */
-	public $sPath;
+	private $sPath;
 
 	/**
 	 * The ILT questions

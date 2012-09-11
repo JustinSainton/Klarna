@@ -224,6 +224,8 @@ class WPKlarna extends Klarna {
         add_action( 'wp_ajax_update_klarna_classes'    , array( $this, 'klarna_update_pc_classes' ) );
         add_action( 'wp_ajax_get_klarna_address'       , array( $this, 'klarna_get_address' ) );
         add_action( 'wp_ajax_nopriv_get_klarna_address', array( $this, 'klarna_get_address' ) );
+        add_action( 'wp_ajax_languagepack'             , array( $this, 'klarna_language_pack' ) );
+        add_action( 'wp_ajax_nopriv_languagepack'      , array( $this, 'klarna_language_pack' ) );
     }
 
     public static function klarna_update_pc_classes() {
@@ -397,6 +399,34 @@ class WPKlarna extends Klarna {
         
         die($sString);
     }
+
+    public static function klarna_language_pack() {
+        $sSubAction = KlarnaHTTPContext::toString('subAction');
+    
+    if ($sSubAction == "klarna_box") {
+        $sNewISO = KlarnaHTTPContext::toString('newIso_type');
+        $sCountry = KlarnaHTTPContext::toString('country_type');
+        $iSum = KlarnaHTTPContext::toInteger('sum', 0);
+        $iFlag = KlarnaHTTPContext::toInteger('flag');
+        $sType = KlarnaHTTPContext::toString('payment_type');
+        $aParams = KlarnaHTTPContext::toArray('params');
+        $aValues = KlarnaHTTPContext::toArray('values');
+
+        if ($sType != "part" && $sType != "invoice" && $sType != "spec")
+            exit("Invalid paramters");
+
+        $Klarna = new WPKlarna($sType);
+        $aParams = $Klarna->getParams();
+
+        echo $Klarna->getChangedLanguageCheckoutForm($aParams, $aValues, $sNewISO);
+    }
+    else if ($sSubAction == 'jsLanguagePack')
+    {
+        $sNewISO    = KlarnaHTTPContext::toString('newIso');
+        $sFetch     = "";
+    }
+    die;
+}
     
     /**
      * Checks to see if the payment module should be enabled. Also sets a bunch of values.
