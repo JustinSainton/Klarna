@@ -459,7 +459,6 @@
     width: 100%;
     display: table;
 }
-
 .klarna_box_bottom_input_combo div#left
 {
     float: left;
@@ -470,9 +469,16 @@
     float: right;
 }
 
+.klarna_box_bottom_input_combo > div {
+    display : table-cell;
+    vertical-align: bottom;
+    float:none !important;
+}
+
+
 .klarna_box_bottom_right
 {
-    min-width: 59%;
+    width: 59%;
     float: right;
 }
 

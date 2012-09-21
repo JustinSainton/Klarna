@@ -17,6 +17,15 @@ $klarna_gateways[$num] = array(
 	'submit_function' => 'submit_klarna_spec',
 	'internalname' => 'wpsc_merchant_klarna_spec'
 );
+
+$pclass_var = ( $Klarna->enabled && ! is_admin() ) ? $Klarna->getPClasses( KlarnaPClass::SPECIAL ) : 'set';
+
+if ( ( ! is_admin() && ! in_array( strtolower( get_option( 'base_country' ) ), array( 'se', 'no', 'fi' ) ) ) || ( ! is_admin() && empty( $pclass_var ) ) )
+    unset( $klarna_gateways[$num] );
+
+if ( ! is_admin() && 'set' == $pclass_var )
+    unset( $klarna_gateways[$num] );
+
 if ( $Klarna->enabled && ! is_admin() ) {
     global $gateway_checkout_form_fields;
     $gateway_checkout_form_fields['wpsc_merchant_klarna_spec'] = $Klarna->getCheckoutForm();

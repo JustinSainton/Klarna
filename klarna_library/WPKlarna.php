@@ -221,13 +221,40 @@ class WPKlarna extends Klarna {
             $this->updateMessage = '&nbsp;&middot;&nbsp;UPDATE AVAILABLE';
 
         //Proper AJAX Handlers
-        add_action( 'wp_ajax_update_klarna_classes'    , array( $this, 'klarna_update_pc_classes' ) );
-        add_action( 'wp_ajax_get_klarna_address'       , array( $this, 'klarna_get_address' ) );
-        add_action( 'wp_ajax_nopriv_get_klarna_address', array( $this, 'klarna_get_address' ) );
-        add_action( 'wp_ajax_languagepack'             , array( $this, 'klarna_language_pack' ) );
-        add_action( 'wp_ajax_nopriv_languagepack'      , array( $this, 'klarna_language_pack' ) );
+        add_action( 'wp_ajax_update_klarna_classes'        , array( $this, 'klarna_update_pc_classes' ) );
+        add_action( 'wp_ajax_get_klarna_address'           , array( $this, 'klarna_get_address' ) );
+        add_action( 'wp_ajax_nopriv_get_klarna_address'    , array( $this, 'klarna_get_address' ) );
+        add_action( 'wp_ajax_languagepack'                 , array( $this, 'klarna_language_pack' ) );
+        add_action( 'wp_ajax_nopriv_languagepack'          , array( $this, 'klarna_language_pack' ) );
+        add_action( 'wpsc_before_shipping_of_shopping_cart', array( $this, 'must_use_calculate' ) );
+        add_action( 'init', array( $this, 'update_location' ) );
     }
 
+    public static function update_location() {
+
+        if ( did_action( 'wpsc_edit_item' ) )
+            wpsc_delete_customer_meta( 'update_location' );
+    }
+
+    public static function must_use_calculate() {
+        static $been_called = false;
+
+        $has_checked = wpsc_get_customer_meta( 'update_location' );
+
+        if ( empty( $has_checked ) && ! $been_called && ! isset( $_POST['wpsc_update_location'] ) ) {
+        ?>  
+        <p><em><strong>In order to present the appropriate checkout fields for your current cart configuration, please select your country.<br />If it is already selected, simply hit Calculate.</strong></em></p>
+        <style type="text/css">
+        table.wpsc_checkout_table,
+        div.wpsc_make_purchase,
+        div.wpsc_email_address {
+            display:none;
+        }
+        </style>
+        <?php
+            $been_called = true;
+        }
+    }
     public static function klarna_update_pc_classes() {
         
         check_ajax_referer( 'klarna-pay-classes', 'no_hacky' );
@@ -439,23 +466,25 @@ class WPKlarna extends Klarna {
 
         if ( is_admin() )
             return true;
-        
+
         if($this->moduleType == null || $this->moduleType == '')
             return false;
-        
+
         if($this->getKlarnaOption('enabled') != 'on')
-            return false;
+            return false;   
 
         if(!$this->setCountryCurrency())
             return false;
 
+
         $enabledCountries = explode(',', $this->getKlarnaOption('enabled_countries'));
+
         if(!in_array(strtoupper($this->getCountryCode()), $enabledCountries))
             return false;
         
         $this->eid = (int)$this->getKlarnaOption('eid', true);
         $this->secret = $this->getKlarnaOption('secret', true);
-        
+
         if(empty($this->eid) || empty($this->secret))
             return false;
         
@@ -478,7 +507,7 @@ class WPKlarna extends Klarna {
                 $pclassTypes = null;
                 break;
         }
-        
+
         if($this->context == 'product') {
             $contextFlag = KlarnaFlags::PRODUCT_PAGE;
             $sum = $this->productPrice;
@@ -486,9 +515,6 @@ class WPKlarna extends Klarna {
             $contextFlag = KlarnaFlags::CHECKOUT_PAGE;
             $sum = $this->totalCartValueIncludingTax;
         }
-        
-        if ( self::ENABLE_KLARNA_ILT != 1 && $this->getCountry() == KlarnaCountry::NL && $sum > 250 )
-            return false;
 
         $this->API = new KlarnaAPI(
             $this->getCountryCode(),    // country
@@ -564,13 +590,12 @@ class WPKlarna extends Klarna {
     public static function getCustomerCountry() {
         global $user_ID, $wpdb;
 
+        $delivery_country = wpsc_get_customer_meta( 'shipping_country' );
         // First, check if customer has changed country in the checkout form
-        if(isset($_POST['country']) && $_POST['country'])
+        if ( isset( $_POST['country'] ) && $_POST['country'] )
             return $_POST['country'];
-        elseif(isset($_SESSION['delivery_country']) && $_SESSION['delivery_country'])
-            return $_SESSION['delivery_country'];
-        elseif(isset($_SESSION['wpsc_delivery_country']) && $_SESSION['wpsc_delivery_country'])
-            return $_SESSION['wpsc_delivery_country'];
+        elseif( ! empty( $delivery_country ) )
+            return $delivery_country;
         else {
 
             // Try to get the shipping country set in the WP user profile
@@ -584,6 +609,13 @@ class WPKlarna extends Klarna {
                         return $arr[$shippingCountryID];
                 }
             }
+
+
+            //This method needs some re-analysis.  Upon testing, Klarna only appears to work consistently when the customer
+            //is in the same country as the store.  This can be resolved another day.   For now, we return the 
+            //store location.
+
+            return strtolower( get_option( 'base_currency' ) );
 
             // Use the first language (or country) in the Accept-Language header
             $matches = array();
@@ -724,19 +756,21 @@ class WPKlarna extends Klarna {
                 default:
                     break;
             }
-            if ( $klarnaValue && isset( $_SESSION['wpsc_checkout_saved_values'] ) ) {
+            $maybe_checkout_values = wpsc_get_customer_meta( 'checkout_details' );
+            if ( $klarnaValue && ! empty( $maybe_checkout_values ) ) {
                 if ( is_array( $klarnaValue ) ) {
                     foreach ( $klarnaValue as $value ) {
-                        $values[$value] = $_SESSION['wpsc_checkout_saved_values'][$formData->id];
+                        $values[$value] = $maybe_checkout_values[$formData->id];
                     }
                 } else {
-                    $values[$klarnaValue] = $_SESSION['wpsc_checkout_saved_values'][$formData->id];
+                    $values[$klarnaValue] = $maybe_checkout_values [$formData->id];
                 }
             }
         }
         
         if ($this->getCountryCode() == 'de' || $this->getCountryCode() == 'nl') {
             $addressMatches = array();
+            $values['street'] = isset( $values['street'] ) ? $values['street'] : '';
             preg_match('/(?P<street>.*?) (?P<houseno>[0-9]+.*?)( (?P<houseext>[^ ]+))?$/', $values['street'], $addressMatches);
             if(isset($addressMatches['street'])) {
                 $values['street'] = $addressMatches['street'];
@@ -763,8 +797,9 @@ class WPKlarna extends Klarna {
                 $values[$field] = (trim((string)$_POST[$fullFieldName]));
         }
         
-        if(isset($_SESSION[$wpsc_cart->unique_id]['klarnaCustomerInfo']))
-            $values = array_merge($values, $_SESSION[$wpsc_cart->unique_id]['klarnaCustomerInfo']);
+        $maybe_customer_info = wpsc_get_customer_meta( 'klarna_customer_info' );
+        if ( ! empty( $maybe_customer_info ) )
+            $values = array_merge( $values, $maybe_customer_info );
 
         if ( self::ENABLE_KLARNA_ILT == 1 && is_array($this->iltQuestions) && count($this->iltQuestions) >= 1)
             $this->API->setIltQuestions($this->iltQuestions);
@@ -832,20 +867,23 @@ EOF;
 
         if(!$this->checkoutFormValidates) {
             $states['is_valid'] = 0;
-
-            if(!empty($this->klarnaErrors)) {
-                $_SESSION['wpsc_checkout_misc_error_messages'][] = '<div style="border:1px solid #7BA7C9;padding:10px;">
+            $errors = wpsc_get_customer_meta( 'checkout_misc_error_messages' );
+            if ( ! is_array( $errors ) )
+                $errors = array();
+            if ( ! empty( $this->klarnaErrors ) ) {
+                $errors[] = '<div style="border:1px solid #7BA7C9;padding:10px;">
                 <img src="' . KLARNA_URL . '/klarna_library/images/klarna/images/logo/klarna_logo.png" /><br />' .
                 '<ul style="list-style: square inside none ! important;"><li>' .
                 implode('</li><li>', $this->klarnaErrors).'</li></ul></div>';
             } else {
-                $_SESSION['wpsc_checkout_misc_error_messages'][] = '<div style="border:1px solid #7BA7C9;padding:10px;">
+                $errors[] = '<div style="border:1px solid #7BA7C9;padding:10px;">
                 <img src="' . KLARNA_URL . '/klarna_library/images/klarna/images/logo/klarna_logo.png" /><br />' .
                 $this->fetchFromLanguagePack('error_title_1') .
                 '<br/><ul style="list-style: square inside none ! important;"><li>' .
                 implode('</li><li>', $this->validationErrors).'</li></ul><br/>' .
                 $this->fetchFromLanguagePack('error_title_2') . '</div>';
             }
+            wpsc_update_customer_meta( 'checkout_misc_error_messages', $errors );
         }
 
         return $states;
@@ -870,16 +908,19 @@ EOF;
                 (isset($_POST['klarna_' . $this->moduleType . '_' . $field]) ?
                 (trim((string)$_POST['klarna_' . $this->moduleType . '_' . $field])) : '');
         }
-        $_SESSION[$wpsc_cart->unique_id]['klarnaCustomerInfo'] = $klarnaCustomerInfo;
+
+        wpsc_update_customer_meta( 'klarna_customer_info', $klarnaCustomerInfo );
         
         $valid = true;
         $errors = array();
+
+        $checkout_details = wpsc_get_customer_meta( 'checkout_details' );
         
         $emailAddressID = $wpdb->get_var("SELECT `" . WPSC_TABLE_CHECKOUT_FORMS . "`.`id` FROM `" . WPSC_TABLE_CHECKOUT_FORMS . "` WHERE `unique_name` = 'billingemail' AND active = '1' ");
         if(isset($_POST['collected_data'][$emailAddressID]) && $_POST['collected_data'][$emailAddressID])
             $klarnaCustomerInfo['emailAddress'] = $_POST['collected_data'][$emailAddressID];
         else
-            $klarnaCustomerInfo['emailAddress'] = $_SESSION['wpsc_checkout_saved_values'][$emailAddressID];
+            $klarnaCustomerInfo['emailAddress'] = $checkout_details[$emailAddressID];
 
         $klarnaCustomerInfo['phone'] = ($klarnaCustomerInfo['phoneNumber'] ? $klarnaCustomerInfo['phoneNumber'] : $klarnaCustomerInfo['mobilePhone']);
 
@@ -1109,13 +1150,25 @@ EOF;
                 }
             } catch(Exception $e) {
                 $valid = false;
-                $this->validationErrors = array('Fatal error encountered when try to fetch ILT questions.');
+                $this->validationErrors = array( 'Fatal error encountered when try to fetch ILT questions.' );
             }
         }
         
-        $_SESSION[$wpsc_cart->unique_id]['klarnaAddressObject'] = $this->addrs;
-        $_SESSION[$wpsc_cart->unique_id]['klarnaCustomerInfo'] = $klarnaCustomerInfo;
-        
+        if ( $valid ) {
+            $address = (array) $this->addrs->toArray();
+
+            $new_address_object = array();
+
+            foreach ( $address as $key => $value ) {
+                if ( ! seems_utf8( $value ) )
+                    $value = utf_encode( $value );
+                 $new_address_object[$key] = $value;
+            }
+
+            wpsc_update_customer_meta( 'klarna_address_object', $new_address_object );
+            wpsc_update_customer_meta( 'klarna_customer_info', $klarnaCustomerInfo );
+        }
+
         return $valid;
     }
     
@@ -1129,8 +1182,8 @@ EOF;
     public function checkoutSubmit(&$Merchant) {
         global $wpdb, $wpsc_cart, $current_user, $cart_data;
 
-        $this->addrs = $_SESSION[$wpsc_cart->unique_id]['klarnaAddressObject'];
-        $klarnaCustomerInfo = $_SESSION[$wpsc_cart->unique_id]['klarnaCustomerInfo'];
+        $this->addrs = wpsc_get_customer_meta( 'klarna_address_object' );
+        $klarnaCustomerInfo = wpsc_get_customer_meta( 'klarna_customer_info' );
 
         get_currentuserinfo();
 
@@ -1248,19 +1301,35 @@ EOF;
                 KlarnaFlags::INC_VAT);
         }
 
-        if($this->addrs->getCountry() == KlarnaCountry::NL || $this->addrs->getCountry() == KlarnaCountry::DE) {
-            $billingAddress = $this->addrs;
+        $new_address_object = new KlarnaAddr( 
+            $this->addrs['email'], 
+            $this->addrs['telno'], 
+            $this->addrs['cellno'], 
+            $this->addrs['fname'], 
+            $this->addrs['lname'], 
+            $this->addrs['careof'], 
+            $this->addrs['street'], 
+            $this->addrs['zip'], 
+            $this->addrs['city'], 
+            $this->addrs['country'], 
+            $this->addrs['house_number'], 
+            $this->addrs['house_extension'] 
+        );
+
+
+        if ( $this->addrs['country'] == KlarnaCountry::NL || $this->addrs['country'] == KlarnaCountry::DE ) {
+            $billingAddress = $new_address_object;
         } else {
             try {
                 $billingPhone = '';
-                foreach($wpsc_checkout->checkout_items AS $formData) {
+                foreach($wpsc_checkout->checkout_items as $formData) {
                     if($formData->unique_name == 'billingphone') {
                         $billingPhone = $_POST['collected_data'][$formData->id];
                         break;
                     }
                 }
                 if($billingPhone == '')
-                    $billingPhone = $this->addrs->getTelno();
+                    $billingPhone = $this->addrs['telno'];
 
                 if(isset($Merchant->cart_data['billing_address']['country']))
                     $billingCountry = $Merchant->cart_data['billing_address']['country'];
@@ -1282,9 +1351,11 @@ EOF;
                 return false;
             }
         }
+        
+        $this->addrs = $new_address_object;
 
         try {
-            $this->setAddress(KlarnaFlags::IS_SHIPPING, $this->addrs);
+            $this->setAddress(KlarnaFlags::IS_SHIPPING, $new_address_object);
             $this->setAddress(KlarnaFlags::IS_BILLING, $billingAddress);
 
             if ($this->askForYearlySalary()) {
@@ -1331,9 +1402,9 @@ EOF;
         if(isset($result[0]) && strlen($result[0]) > 0)
             $this->updateOrderNo($result[0], $Merchant->purchase_id);
         
-        unset($_SESSION[$wpsc_cart->unique_id]['klarnaCustomerInfo']);
-        unset($_SESSION[$wpsc_cart->unique_id]['klarnaAddressObject']);
-        
+        wpsc_delete_customer_meta( 'klarna_customer_info' );
+        wpsc_delete_customer_meta( 'klarna_address_object' );
+
         return $result;
     }
     

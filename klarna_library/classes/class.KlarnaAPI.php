@@ -279,7 +279,7 @@ class KlarnaAPI {
 				$sFilename	= ($this->sPath != null ? $this->sPath : "") . '/html/' . strtolower($this->sCountryCode) . "/" . $this->sType . ".html";
 			}
 			else {
-				$this->aSetupSettings['conditionsLink']	= $aTemplateData['conditions'];
+				$this->aSetupSettings['conditionsLink']	= isset( $aTemplateData['conditions'] ) ? $aTemplateData['conditions'] : '';
 
 				$sFilename	= ($this->sPath != null ? $this->sPath : "") . '/html/campaigns/' . $aTemplateData['name'] . "/" . strtolower($this->sCountryCode) . "/" . $this->sType . ".html";
 			}

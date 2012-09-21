@@ -730,7 +730,7 @@ class Klarna {
             case 'nl':
                 return KlarnaCountry::NL;
             default:
-                throw new KlarnaException('Error in ' . __METHOD__ . ': Unknown country! ("'.$code.'")', 50002);
+                return new WP_Error( '50002', 'Error in ' . __METHOD__ . ': Unknown country! ("'.$code.'")' );
         }
     }
 
@@ -3134,6 +3134,7 @@ class Klarna {
             return $tmp[$this->eid];
         }
         catch(Exception $e) {
+            debug_print_backtrace();
             throw new KlarnaException('Error in ' . __METHOD__ . ': ' . $e->getMessage(), $e->getCode());
         }
     }
@@ -3354,7 +3355,7 @@ class Klarna {
             //Send the message.
             $selectDateTime = microtime(true);
             if(self::$xmlrpcDebug) $this->xmlrpc->setDebug(2);
-            $xmlrpcresp = $this->xmlrpc->send($msg);
+            $xmlrpcresp = $this->xmlrpc->send($msg, 60);
 
             //Calculate time and selectTime.
             $timeend = microtime(true);

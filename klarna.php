@@ -3,7 +3,7 @@
   * Plugin Name: Klarna for WPeC
   * Plugin URI: https://klarna.com
   * Description: Klarna Gateway Integration with WP E-Commerce
-  * Version: 1.1
+  * Version: 1.3
   * Author: Zao
   * Author URI: http://zaowebdesign.com/
   * Sputnik ID: klarna-payment-gateway
@@ -17,6 +17,9 @@
 
 		if ( ! defined( 'KLARNA_URL' ) )
 			define( 'KLARNA_URL'      , plugins_url( '', __FILE__ ) );
+
+		if ( ! function_exists( 'wpsc_core_setup_cart' ) )
+			return false;
 
 		if ( ! is_object( $wpsc_cart ) )
 			wpsc_core_setup_cart();
