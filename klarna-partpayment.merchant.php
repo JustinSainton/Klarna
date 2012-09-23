@@ -20,10 +20,7 @@ $klarna_gateways[$num] = array(
 
 $pclass_var = ( $Klarna->enabled && ! is_admin() && is_object( $Klarna ) ) ? $Klarna->getPClasses( KlarnaPClass::ACCOUNT ) : 'set';
 
-if ( ( ! is_admin() && ! in_array( strtolower( get_option( 'base_country' ) ), array( 'se', 'no', 'fi' ) ) ) || ( ! is_admin() && empty( $pclass_var ) ) )
-    unset( $klarna_gateways[$num] );
-
-if ( ! is_admin() && 'set' == $pclass_var )
+if ( ! is_admin() && ( 'set' == $pclass_var || empty( $pclass_var ) ) )
     unset( $klarna_gateways[$num] );
 
 if ( $Klarna->enabled && ! is_admin() ) {    

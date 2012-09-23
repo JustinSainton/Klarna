@@ -265,13 +265,14 @@
     border-top: 1px solid #BDBDBD;
     border-left: 1px solid #BDBDBD;
     border-right: 1px solid #BDBDBD;
-    overflow: none;
+    overflow: hidden;
     list-style: none;
-    
-    margin: 2px 0 0 0;
+    margin: 2px 0;
     padding: 0;
 }
-
+.klarna_box_bottom div.nlBanner {
+    margin-top:3px;
+}
 .klarna_box_bottom ol li
 {
     width: 100%;

@@ -812,6 +812,9 @@ class WPKlarna extends Klarna {
             $balloons = '';
         }   
 
+        $params['nlBanner'] = ($this->getCountryCode() == 'nl' ? '<div class="nlBanner"><img src="' . KLARNA_URL . '/klarna_library/images/klarna/account/notice_nl.jpg" /></div>' : '');
+
+
         return $balloons . $this->API->retrieveHTML($params, $values, null, array('name' => 'default'));
     }
     
@@ -1155,14 +1158,11 @@ EOF;
         }
         
         if ( $valid ) {
-            $address = (array) $this->addrs->toArray();
-
+            $address = $this->addrs->toArray();
             $new_address_object = array();
 
             foreach ( $address as $key => $value ) {
-                if ( ! seems_utf8( $value ) )
-                    $value = utf_encode( $value );
-                 $new_address_object[$key] = $value;
+                $new_address_object[$key] = ! seems_utf8( $value ) ? utf8_encode( $value ) : utf8_decode( $value );
             }
 
             wpsc_update_customer_meta( 'klarna_address_object', $new_address_object );
@@ -1616,7 +1616,7 @@ EOF;
                         break;
                 }
                 if($id && $value) {
-                    $wpdb->update(WPSC_TABLE_SUBMITED_FORM_DATA, array('value' => utf8_encode($value)), array('id' => absint($id)));
+                    $wpdb->update(WPSC_TABLE_SUBMITED_FORM_DATA, array('value' => $value), array('id' => absint($id)));
                 }
             }
         }
